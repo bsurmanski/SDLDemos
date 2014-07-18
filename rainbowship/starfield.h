@@ -1,0 +1,1 @@
+typedef struct Starfield Starfield;Starfield* get_starfield();void draw_starfield(Starfield *sf);void update_starfield(Starfield *sf, int angle);

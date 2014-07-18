@@ -1,0 +1,15 @@
+a.out
+a.exe
+*.dll
+*.zip
+*.bak
+*.swp
+*.o
+*~
+_backup
+callgrind.*
+stdout.txt
+stderr.txt
+Thumbs.db
+.sconsign.dblite
+tags

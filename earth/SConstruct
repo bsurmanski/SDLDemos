@@ -1,0 +1,136 @@
+import os
+import os.path
+import platform
+import shutil
+
+builddir="build/"
+srcdir="src/"
+bindir="bin/"
+libdir="lib/"
+exe="earth"
+libname="cw"
+libs = ["SDL", "m"]
+win32_libs = ["mingw32", "SDLmain", "SDL", "m"]
+gcclibdir = []
+
+cflags = ["-std=c99", "-D DEBUG", "-O0", "-g", "-ftrapv",\
+"-Winit-self", "-Wimplicit", "-Wreturn-type", "-Wuninitialized",\
+"-Wtrampolines", "-Wfloat-equal", "-Waddress", "-Wall", "-Wno-unused", "-pedantic",
+"-Wshadow", "-Wstrict-prototypes", "-Wmissing-prototypes", "-Wno-pointer-to-int-cast", "-Wno-int-to-pointer-cast", "-Isrc/clockwork/"] #TODO: -Isrc... temporary
+
+releaseflags = ["-std=c99", "-O3", "-ftrapv",\
+"-Winit-self", "-Wimplicit", "-Wreturn-type", "-Wuninitialized",\
+"-Wtrampolines", "-Wfloat-equal", "-Waddress", "-Wall", "-Wno-unused", "-pedantic",
+"-Wshadow", "-Wstrict-prototypes", "-Wmissing-prototypes", "-Wno-pointer-to-int-cast", "-Wno-int-to-pointer-cast",\
+"-ftree-vectorize"]
+
+game_sources = \
+[\
+"main.c", \
+"world.c", \
+"feature.c", \
+"feature_sdl.c", \
+"feature_terrain.c", \
+"sdl.c", \
+]
+
+#j4
+SetOption('num_jobs', 4)
+
+AddOption('--release',
+        dest='release',
+        action='store_true',
+        default=False,
+        help='Build release version')
+
+AddOption('--test',
+        dest='test',
+        type='string',
+        nargs=1,
+        action='store',
+        help='Type of test build to do')
+
+AddOption('--count',
+        dest='count',
+        action='store_true',
+        default=False,
+        help='Count the lines of code, instead of building') #TODO: finish option
+
+AddOption('--doc',
+        dest='doc',
+        action='store_true',
+        default=False,
+        help='Create Documentation')
+
+AddOption('--lib',
+        dest='lib',
+        action='store_true',
+        default=False,
+        help='Create library files')
+
+if GetOption('count'):
+    os.system('find -L '+ srcdir + ' -regex ".*\(c\|h\|lua\|fs\|vs\|glsl\)" | xargs wc')
+
+if GetOption('doc'):
+    os.system("doxygen doc/Doxyfile")
+
+if GetOption('test') == 'kdtree':
+    game_sources.remove('main.c')
+    game_sources.append('test/kdtest.c')
+elif GetOption('test') == 'octree':
+    game_sources.remove('main.c')
+    game_sources.append('test/octest.c')
+elif GetOption('test') == 'unit':
+    game_sources.remove('main.c')
+    game_sources.append("test/unit_test.c")
+    cflags.append('-D NO_GL')
+elif GetOption('test') == 'aero':
+    game_sources.remove('main.c')
+    game_sources.append('test/aero_test.c')
+    cflags.append('-D NO_GL')
+elif GetOption('test') == 'sort':
+    game_sources.remove('main.c')
+    game_sources.append('test/sorttest.c')
+
+if not GetOption('count') and not GetOption('doc'):
+    env = Environment(ENV=os.environ, CCFLAGS=cflags, CPPPATH=srcdir)
+
+    #if on windows
+    if env['PLATFORM'] == 'win32':
+        bindir="bin/WIN32/"
+        env['CCFLAGS'] += ["-mwindows"]
+        libs = win32_libs
+        gcclibdir += ["C:\\MinGW\\lib\\"]
+        Tool('mingw')(env)
+        Tool('gcc')(env)
+    else: #not on windows, linux
+        env['CCFLAGS'] += ['-pthread']
+        libs += ["pthread"]
+
+    env.Repository(srcdir)
+    game_objects = [env.Object(builddir + os.path.splitext(os.path.basename(source))[0], source) for source in game_sources]
+
+    for i in range(0,len(game_sources)):
+        game_sources[i] = srcdir + game_sources[i]
+
+#synchronize glsl and resource files
+    if os.path.exists(bindir + "res/"):
+            shutil.rmtree(bindir + "res/")
+
+#copy glsl and resource files to bin directory, if not cleaning
+    if not GetOption('clean'):
+        shutil.copytree("res/", bindir + "res/")
+
+        f = open("cscope.files", "w")
+        [f.write(source + "\n") for source in game_sources]
+        f.close()
+
+    SConscript(["lib/libcw/SConslave"]);
+
+    #copy libcw library to lib directory
+    LIBCWFILE = libdir + "libcw/lib/libcw.so"
+    if os.path.exists(LIBCWFILE):
+        shutil.copy(LIBCWFILE, libdir) #TODO: tmp
+
+    objprog = env.Program(target=(bindir+exe), LIBS=[libs,libname], LIBPATH=[libdir], LINKFLAGS=["-L. -L./lib/"], source=game_objects)
+    Default(objprog)
