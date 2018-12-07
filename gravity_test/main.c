@@ -5,7 +5,10 @@
  * Brandon Surmanski
  */
 
-#include <string.h>
+// C is weird and doesn't define a 'bool' type by default.
+// C expects you to just use an integer that is 0 or not 0.
+// Include this standard library to use boolean logic and
+// true/false constant values.
 #include <stdbool.h>
 
 // SDL is a library we use for creating a
@@ -13,6 +16,19 @@
 // All functions that start with SDL_ are
 // from this library.
 #include <SDL2/SDL.h>
+
+// define constants for screen width and height.
+// There isn't anything special about these dimensions,
+// I've just been using them for projects for a long time
+// and I kinda like them.
+// This resolution is 'QVGA'.
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
+
+// Global variables.
+// Typically the less globals the better,
+// but we'll make an exception for these.
+static bool running = true;
 
 // Define a 'struct' to hold Player variables.
 typedef struct Player {
@@ -22,12 +38,6 @@ typedef struct Player {
   float vy;
   bool on_floor;
 } Player;
-
-// Global variables.
-// Typically the less globals the better,
-// but we'll make an exception for these.
-static int running = 1;
-static int paused = 1;
 
 // Create and initialize a new player.
 Player create_player() {
@@ -54,7 +64,7 @@ void handle_input(Player *player) {
   // Handle closing the window.
   SDL_Event e;
   while (SDL_PollEvent(&e)) {
-    if (e.type == SDL_QUIT) running = 0;
+    if (e.type == SDL_QUIT) running = false;
   }
 
   // Get the current keyboard state.
@@ -77,6 +87,9 @@ void handle_input(Player *player) {
 }
 
 void update(Player *player) {
+  // handle key input. Will modify the player.
+  handle_input(player);
+
   // constant wall y-coordinate
   const int wally = 120;
 
@@ -101,8 +114,8 @@ void update(Player *player) {
   }
 
   // bounce off right wall.
-  if (player->x >= 320) {
-    player->x = 319;
+  if (player->x >= SCREEN_WIDTH) {
+    player->x = SCREEN_WIDTH - 1;
     player->vx = -player->vx;
   }
 
@@ -112,19 +125,25 @@ void update(Player *player) {
 }
 
 void draw(SDL_Texture *texture, Player *player) {
-  int w = 320;
-  int h = 240;
-
+  // This will be a pointer to the pixel data in the texture.
   int *pixels;
+
+  // This will be the number of bytes in a row before wrapping
+  // around. The pixel data is 2D, but is represented as a 1D
+  // array, so we need to know how long each row is.
   int pitch;
+
+  // Locking a texture is required by SDL2 if you want
+  // to do software reading/writing to a texture.
+  // This function will populate 'pixels' and 'pitch'.
   SDL_LockTexture(texture, NULL, (void**) &pixels, &pitch);
   pitch /= 4; // make pitch relative to int instead of byte.
 
   // wacky stuff to draw player trail.
   // Fade the whole screen over time.
   int i, j;
-  for (i = 0; i < h; i++) {
-    for (j = 0; j < w; j++) {
+  for (i = 0; i < SCREEN_HEIGHT; i++) {
+    for (j = 0; j < SCREEN_WIDTH; j++) {
       int p = getPixel(pixels, pitch, j, i);
       // set topmost bit to zero.
       p &= 0x7fffffff;
@@ -148,26 +167,39 @@ void draw(SDL_Texture *texture, Player *player) {
   setPixel(pixels, pitch, (int)player->x, (int)player->y + 1, 0xFFFFFFFF);
   setPixel(pixels, pitch, (int)player->x, (int)player->y - 1, 0xFFFFFFFF);
 
+  // After we're done with the texture, we need to 'unlock' it.
+  // Required by SDL2.
   SDL_UnlockTexture(texture);
 }
 
 // main function. Everything starts here.
 int main(int unused_argc, char **unused_argv) {
+
   // Setup the SDL library.
   SDL_Init(SDL_INIT_VIDEO);
 
-  // create an SDL screen. This initializes the window.
+  // Create an SDL screen. This initializes the window.
   SDL_Window *window = SDL_CreateWindow(
           "Jumpy",
           SDL_WINDOWPOS_UNDEFINED,
           SDL_WINDOWPOS_UNDEFINED,
-          320, 240,
+          SCREEN_WIDTH, SCREEN_HEIGHT,
           0);
+
+  // Create a new SDL renderer. This object does rendering stuff, idk.
   SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+
+  // Create a texture to draw to.
+  // SDL2 doesn't let you draw directly to the screen (unlike SDL1),
+  // So we need to create this for our weird software rendering.
+  // Software rendering isn't super common these days, most of the
+  // time things will use the GPU to draw, which is *much* faster.
+  // But it is also more confusing, so lets just use software rendering
+  // for now.
   SDL_Texture *texture = SDL_CreateTexture(renderer,
                                            SDL_PIXELFORMAT_RGBA8888,
                                            SDL_TEXTUREACCESS_STREAMING,
-                                           320, 240);
+                                           SCREEN_WIDTH, SCREEN_HEIGHT);
 
   // create a new player.
   Player player = create_player();
@@ -179,14 +211,23 @@ int main(int unused_argc, char **unused_argv) {
   while (running) {
     // Start time of current frame.
     start_tick = SDL_GetTicks();
-    // update everything.
-    handle_input(&player);
+
+    // update game state. Will modify the player.
+    // If I had more game state, I would consider making
+    // a 'Game' struct to hold everything and pass that
+    // into update and draw.
     update(&player);
+
+    // draw the player.
     draw(texture, &player);
 
+    // Render the texture.
     SDL_RenderCopy(renderer, texture, NULL, NULL);
 
-    // Draw 'renderer' context to the screen.
+    // Draw what we've currently rendered to the screen.
+    // It might seems like SDL_RenderCopy is doing the
+    // same thing, but SDL requires this two step process
+    // of drawing to the renderer, then to the screen.
     SDL_RenderPresent(renderer);
 
     // Delay a bit so we don't go a million frame per second.
