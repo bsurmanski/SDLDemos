@@ -13,3 +13,6 @@ stderr.txt
 Thumbs.db
 .sconsign.dblite
 tags
+.DS_Store
+SDLMain.m
+SDLMain.h

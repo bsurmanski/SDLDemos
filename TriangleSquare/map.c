@@ -61,12 +61,13 @@ void map_initDiamondSquare(int width, int height)
         w = h = (w > h ? w : h); // assign both to max
     }
 
-    if(w & (w-1) != 0){ // not power of 2
+    /*
+    if((w & (w-1)) != 0){ // not power of 2
         for(i = 1; i < sizeof(int); i<<=1){
             w = w | w >> i;
         }
         h = w = w + 2; // set width and height to higher pow 2
-    }
+    }*/
 
     if(data){
         free(data);

@@ -38,7 +38,7 @@ void fire(SDL_Surface *s)
     //randomly light bottom
     for(i = 0; i < s->w; i++){
         if((rand() % 100) < 60){
-            setPixel(s, i, s->h-1, SDL_MapRGB(s->format, 255, 0, 0));
+            setPixel(s, i, s->h-1, SDL_MapRGBA(s->format, 255, 0, 0, 255));
         }
     }
     //average values

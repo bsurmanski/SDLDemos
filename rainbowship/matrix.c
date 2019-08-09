@@ -4,7 +4,7 @@
 
 TrigTable *t = 0;
 
-inline void apply_matrix(Vector *v, Matrix *m)
+void apply_matrix(Vector *v, Matrix *m)
 {
     float x = v->x;
     float y = v->y;
@@ -17,14 +17,14 @@ Matrix *get_rotation_matrix(int degrees)
     if (!t){
         t = init_table();
     }
-    
+
     Matrix *m = malloc(sizeof(Matrix));
     float sin = lookup_sin(t, degrees);
     float cos = lookup_cos(t, degrees);
     m->array[0][0] = cos;
     m->array[1][0] = -sin;
     m->array[0][1] = sin;
-    m->array[1][1] = cos; 
+    m->array[1][1] = cos;
     return m;
 }
 
@@ -47,7 +47,7 @@ Vector *get_unit_vector(int rotation)
     return v;
 }
 
-inline void set_vector(Vector *v, float x, float y)
+void set_vector(Vector *v, float x, float y)
 {
     v->x = x;
     v->y = y;

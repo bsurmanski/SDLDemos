@@ -9,8 +9,8 @@
 #include <stdbool.h>
 
 #include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
-#include <SDL/SDL_mixer.h>
+#include <SDL_image/SDL_image.h>
+#include <SDL_mixer/SDL_mixer.h>
 
 #include "yappy.h"
 
@@ -21,16 +21,16 @@ static SDL_Surface *yappy_opened;
 static Mix_Chunk *sqeek;
 
 bool yappy_open;
-static running;
+static int running;
 
 void yappy_load(void)
 {
-    yappy_closed = IMG_Load("res/yappy-closed.png");
-    yappy_opened = IMG_Load("res/yappy-open.png");
+    yappy_closed = IMG_Load("yappy-closed.tga");
+    yappy_opened = IMG_Load("yappy-open.png");
     sqeek = Mix_LoadWAV("onetone.wav");
     running = 1;
     if (!sqeek) printf("sound load error: %s\n", Mix_GetError());
-    //if (!yappy_closed || !yappy_opened || !sqeek) running = 0;
+    if (!yappy_closed || !yappy_opened) printf("issue loading image\n");
 }
 
 static void handle_keys(void)
@@ -41,17 +41,33 @@ static void handle_keys(void)
     running = !key_state[SDLK_RETURN];
 }
 
+void twiddle() {
+    SDL_Surface *s = main_screen;
+    for(int j = 0; j < s->h; j++) {
+        for(int i = 0; i < s->w; i++) {
+            int v = ((int*)s->pixels)[j * s->w + i];
+            int tmp = 0;
+            tmp |= (v & 0x00ff0000) >> 8;
+            tmp |= (v & 0x0000ff00) << 8;
+            tmp |= (v & 0x000000ff) << 24;
+            tmp |= 0xff;
+            ((int*)s->pixels)[j * s->w + i] = tmp;
+        }
+    }
+}
+
 static void draw(void)
 {
     SDL_Rect fill = {0, 0, main_screen->w, main_screen->h};
-    SDL_FillRect(main_screen, &fill, SDL_MapRGB(main_screen->format,
-                255,255,255));
+    SDL_FillRect(main_screen, 0, 0xffffffff);
+
     SDL_Surface *current = yappy_open ? yappy_opened : yappy_closed;
     SDL_Rect yapper = { (int)(main_screen->w/2 - current->w/2),
                         (int)(main_screen->h/2 - current->h/2),
                         current->w,
                         current->h };
     SDL_BlitSurface(current, NULL, main_screen, &yapper);
+    twiddle();
 }
 
 static void sound(void)

@@ -16,17 +16,17 @@
 
 static int seed = 113;
 
-inline float lerp(float t, float a, float b)
+float lerp(float t, float a, float b)
 {
     return (a+t*(b-a));
 }
 
-inline float s_curve(float t)
+float s_curve(float t)
 {
     return (t*t*t*(10+t*(-15+(6*t))));
 }
 
-inline float noise_random1(int x)
+float noise_random1(int x)
 {
     x += seed;
     x = (x<<13) ^ x;
@@ -86,7 +86,7 @@ void normalize2(float *a, float *b)
     (*b) = (*b) / s;
 }
 
-inline float noise_random2(int x, int y)
+float noise_random2(int x, int y)
 {
     x += seed;
     y += seed;
@@ -95,7 +95,7 @@ inline float noise_random2(int x, int y)
     return (1.0f - ((x * (x * x * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824);
 }
 
-inline float noise_random2b(int x, int y)
+float noise_random2b(int x, int y)
 {
     x += seed;
     y += seed;

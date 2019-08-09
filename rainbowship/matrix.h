@@ -7,8 +7,8 @@ typedef struct Vector {
     float y;
 } Vector;
 
-inline void apply_matrix(Vector *v, Matrix *m);
+void apply_matrix(Vector *v, Matrix *m);
 Matrix *get_rotation_matrix(int degrees);
-inline Vector *get_vector();
-inline Vector *get_unit_vector(int rotation);
-inline void set_vector(Vector *v, float x, float y);
+Vector *get_vector();
+Vector *get_unit_vector(int rotation);
+void set_vector(Vector *v, float x, float y);

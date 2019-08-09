@@ -7,6 +7,7 @@
 
 #include <sys/time.h>
 #include <time.h>
+#include <string.h>
 
 #include <SDL/SDL.h>
 
@@ -15,12 +16,12 @@ static int paused = 1;
 static SDL_Surface *screen;
 static SDL_Surface *backbuffer;
 
-inline void *pixelAt(SDL_Surface *s, int x, int y)
+void *pixelAt(SDL_Surface *s, int x, int y)
 {
     return (s->pixels + x * s->format->BytesPerPixel + y * s->pitch);
 }
 
-inline int pixelIsWhite(SDL_Surface *s, int x, int y)
+int pixelIsWhite(SDL_Surface *s, int x, int y)
 {
     int white = 0xFFFFFFFF;
     if(x<0)
@@ -34,12 +35,12 @@ inline int pixelIsWhite(SDL_Surface *s, int x, int y)
     return !memcmp(pixelAt(s,x,y), &white, s->format->BytesPerPixel);
 }
 
-inline void setPixel(SDL_Surface *s, int x, int y, int val)
+void setPixel(SDL_Surface *s, int x, int y, int val)
 {
     memcpy(pixelAt(s, x, y), &val, s->format->BytesPerPixel);
 }
 
-inline void copyBuffer(SDL_Surface *dest, SDL_Surface *src)
+void copyBuffer(SDL_Surface *dest, SDL_Surface *src)
 {
     memcpy(dest->pixels, src->pixels, dest->pitch * dest->h);
 }

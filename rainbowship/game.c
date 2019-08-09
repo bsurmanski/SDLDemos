@@ -9,7 +9,7 @@
 void update();
 void draw();
 int handle_events();
-    
+
 Ship* ship;
 Starfield *stars;
 
@@ -19,14 +19,14 @@ int run_game ()
 {
     ship = get_ship(100,100);
     stars = get_starfield();
-    
+
     while (RUNNING){
 	    handle_events();
 	    update();
 	    draw();
 
 	    SDL_Flip(SDL_GetVideoSurface());
-	    SDL_Delay (16);
+	    SDL_Delay (100);
 	}
 	return 0;
 }
@@ -37,13 +37,29 @@ void update()
 {
     update_starfield(stars, get_ship_rotation(ship));
     update_ship(ship);
-}	
+}
+
+void twiddle() {
+    SDL_Surface *s = SDL_GetVideoSurface();
+    for(int j = 0; j < s->h; j++) {
+        for(int i = 0; i < s->w; i++) {
+            int v = ((int*)s->pixels)[j * s->w + i];
+            int tmp = 0;
+            tmp |= (v & 0x00ff0000) >> 8;
+            tmp |= (v & 0x0000ff00) << 8;
+            tmp |= (v & 0x000000ff) << 24;
+            tmp |= 0xff;
+            ((int*)s->pixels)[j * s->w + i] = tmp;
+        }
+    }
+}
 
 void draw()
 {
     clear_buffer(SDL_GetVideoSurface());
     draw_starfield(stars);
     draw_ship(ship);
+    twiddle();
 }
 
 int handle_events()
@@ -52,7 +68,7 @@ int handle_events()
     int ret = 0;
  while( SDL_PollEvent( &event ) )
         {
-            
+
             //If the user has Xed out the window
             if( event.type == SDL_QUIT )
             {

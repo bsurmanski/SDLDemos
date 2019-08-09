@@ -49,7 +49,7 @@ void run(void)
 int main(int argc, char **argv)
 {
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_SetVideoMode(640, 480, 0, SDL_SWSURFACE);
+    SDL_SetVideoMode(512, 512, 0, SDL_SWSURFACE);
     srand(time(0));
     run();
     return 0;
